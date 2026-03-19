@@ -1,0 +1,60 @@
+// ============================================
+// SCHEMA DE PRISMA - Definición de Modelos
+// ============================================
+// Prisma es nuestro ORM: traduce modelos a tablas SQL
+// y nos da métodos para hacer consultas sin escribir SQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// MODELO: User (Usuarios de la aplicación)
+// ============================================
+// Campos: id, email, name, password, role, timestamps
+// Relación: Un usuario puede tener muchos posts (1:N)
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String
+  password  String   // Se almacena hasheado con bcrypt
+  role      String   @default("user") // "user" | "editor" | "admin"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relación 1:N - Un usuario tiene muchos posts
+  posts Post[]
+
+  // Índice en el campo email para búsquedas rápidas
+  @@index([email])
+}
+
+// ============================================
+// MODELO: Post (Publicaciones del blog)
+// ============================================
+// Campos: id, title, slug, content, image, published, timestamps
+// Relación: Cada post pertenece a un usuario (N:1)
+model Post {
+  id        Int      @id @default(autoincrement())
+  title     String
+  slug      String   @unique
+  content   String   @db.Text // Campo TEXT para contenido largo
+  image     String?  // Ruta de la imagen (opcional)
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relación N:1 - Cada post pertenece a un autor
+  authorId Int
+  author   User @relation(fields: [authorId], references: [id])
+
+  // Índices para búsquedas frecuentes
+  @@index([slug])
+  @@index([authorId])
+  @@index([published])
+}

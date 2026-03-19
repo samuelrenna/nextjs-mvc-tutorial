@@ -1,0 +1,76 @@
+# ============================================
+# DOCKER COMPOSE - MySQL para el proyecto MVC
+# ============================================
+# Este archivo define los servicios (contenedores) que necesitamos.
+# Con un solo comando levantamos MySQL y phpMyAdmin listo para usar.
+#
+# Uso:
+#   docker compose up -d        → Levantar los servicios en segundo plano
+#   docker compose down          → Parar los servicios
+#   docker compose down -v       → Parar y BORRAR los datos de la BD
+#   docker compose logs mysql    → Ver logs de MySQL
+#   docker compose ps            → Ver estado de los contenedores
+
+services:
+  # ============================================
+  # SERVICIO: MySQL 8
+  # ============================================
+  # Servidor de base de datos MySQL.
+  # Los datos se persisten en un volumen Docker,
+  # así que aunque pares el contenedor, los datos se mantienen.
+  mysql:
+    image: mysql:8.0
+    container_name: mvc_mysql
+    restart: unless-stopped
+    environment:
+      # Contraseña del usuario root
+      MYSQL_ROOT_PASSWORD: root1234
+      # Base de datos que se crea automáticamente al iniciar
+      MYSQL_DATABASE: mvc_blog
+      # Usuario adicional (opcional, puedes usar root)
+      MYSQL_USER: mvc_user
+      MYSQL_PASSWORD: mvc_pass
+    ports:
+      # Mapeo de puertos: HOST:CONTENEDOR
+      # Accesible desde tu máquina en localhost:3306
+      - "3306:3306"
+    volumes:
+      # Volumen para persistir los datos de MySQL
+      # Sin esto, los datos se pierden al parar el contenedor
+      - mysql_data:/var/lib/mysql
+    # Comando para usar autenticación nativa (compatibilidad con Prisma)
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot1234"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # SERVICIO: phpMyAdmin (opcional pero útil)
+  # ============================================
+  # Interfaz web para ver y gestionar la base de datos.
+  # Accesible en http://localhost:8080
+  # Usuario: root / Contraseña: root1234
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: mvc_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: root1234
+    ports:
+      # Accesible en http://localhost:8080
+      - "8080:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+# ============================================
+# VOLÚMENES
+# ============================================
+# Los volúmenes Docker persisten datos entre reinicios.
+# 'mysql_data' guarda toda la información de la BD.
+volumes:
+  mysql_data:
