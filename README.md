@@ -200,17 +200,3 @@ nextjs-mvc-tutorial/
 - **bcryptjs** — Hash seguro de contraseñas
 
 ---
-
-## Solución de problemas
-
-**"Can't reach database server at localhost:3306"**
-→ MySQL no está corriendo. Ejecuta `docker compose up -d` y espera unos segundos.
-
-**"Access denied for user 'root'"**
-→ Verifica que la contraseña en `.env` coincida con `docker-compose.yml`. Si cambiaste algo, haz `docker compose down -v` y luego `docker compose up -d` para recrear la BD.
-
-**"Port 3306 already in use"**
-→ Otro MySQL está corriendo (quizá XAMPP). Ciérralo primero, o cambia el puerto en `docker-compose.yml` a `3307:3306` y actualiza el `.env`.
-
-**"prisma migrate dev" se queda colgado**
-→ Docker tarda unos segundos en iniciar MySQL. Espera 10s después del `docker compose up -d` y reintenta.
