@@ -27,8 +27,6 @@ export async function GET() {
     consent: consent?.value || null,
     preferences: preferences ? JSON.parse(preferences.value) : null,
     theme: theme?.value || 'light',
-    // Listar todas las cookies (solo nombres, por seguridad)
-    allCookieNames: cookieStore.getAll().map((c) => c.name),
   });
 }
 
@@ -51,18 +49,23 @@ export async function POST(request) {
       updatedAt: new Date().toISOString(),
     });
 
-    // Configuración de la cookie
-    const cookieOptions = {
-      httpOnly: true,       // No accesible desde JS del navegador
+    // cookie_consent: NO httpOnly — el banner la lee con document.cookie
+    cookieStore.set('cookie_consent', 'accepted', {
+      httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',      // Protección CSRF
-      maxAge: 60 * 60 * 24 * 365, // 1 año
-      path: '/',             // Disponible en toda la app
-    };
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 365,
+      path: '/',
+    });
 
-    // Escribir las cookies
-    cookieStore.set('cookie_consent', 'accepted', cookieOptions);
-    cookieStore.set('cookie_preferences', cookiePreferences, cookieOptions);
+    // cookie_preferences: httpOnly — solo se lee desde el servidor
+    cookieStore.set('cookie_preferences', cookiePreferences, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 365,
+      path: '/',
+    });
 
     return NextResponse.json({
       message: 'Preferencias de cookies guardadas',

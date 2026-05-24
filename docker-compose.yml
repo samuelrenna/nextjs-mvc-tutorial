@@ -13,6 +13,31 @@
 
 services:
   # ============================================
+  # SERVICIO: Next.js App
+  # ============================================
+  app:
+    build: .
+    container_name: mvc_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Montar código fuente para hot reload en desarrollo
+      - .:/app
+      # Preservar node_modules del contenedor (no sobreescribir con el del host)
+      - /app/node_modules
+      - /app/.next
+    environment:
+      # Sobrescribir DATABASE_URL: dentro de Docker, el host de MySQL es el nombre del servicio
+      - DATABASE_URL=mysql://root:root1234@mysql:3306/mvc_blog
+      - SESSION_SECRET=clave-secreta-tutorial-mvc-nextjs-2025-samuel
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - NEXT_PUBLIC_APP_NAME=MVC Blog Tutorial
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # ============================================
   # SERVICIO: MySQL 8
   # ============================================
   # Servidor de base de datos MySQL.

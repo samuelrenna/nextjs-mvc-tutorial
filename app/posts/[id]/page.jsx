@@ -52,7 +52,7 @@ export default async function PostDetailPage({ params }) {
     where: { id: postId },
     include: {
       author: {
-        select: { name: true, role: true, email: true },
+        select: { name: true, role: true },
       },
     },
   });

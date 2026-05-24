@@ -21,9 +21,9 @@ export async function GET(request) {
   try {
     // Leer query params de la URL
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
-    const search = searchParams.get('search') || '';
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '10') || 10));
+    const search = (searchParams.get('search') || '').slice(0, 200);
 
     // Construir filtro WHERE
     const where = {
@@ -83,8 +83,8 @@ export async function POST(request) {
       );
     }
 
-    // 2. Verificar permisos (solo editor o admin pueden crear posts)
-    if (!['editor', 'admin'].includes(user.role)) {
+    // 2. Verificar permisos (user, editor y admin pueden crear posts)
+    if (!['user', 'editor', 'admin'].includes(user.role)) {
       return NextResponse.json(
         { error: 'No tienes permisos para crear posts' },
         { status: 403 } // 403 Forbidden
@@ -93,14 +93,22 @@ export async function POST(request) {
 
     // 3. Leer datos del body
     const body = await request.json();
-    const { title, content, published = false } = body;
+    const { title, content, published = false, image } = body;
 
-    // 4. Validar campos obligatorios
+    // 4. Validar campos obligatorios y longitudes
     if (!title || !content) {
       return NextResponse.json(
         { error: 'El título y contenido son obligatorios' },
         { status: 400 }
       );
+    }
+
+    if (title.length > 255) {
+      return NextResponse.json({ error: 'El título no puede superar 255 caracteres' }, { status: 400 });
+    }
+
+    if (content.length > 100_000) {
+      return NextResponse.json({ error: 'El contenido no puede superar 100.000 caracteres' }, { status: 400 });
     }
 
     // 5. Generar slug único a partir del título
@@ -117,6 +125,7 @@ export async function POST(request) {
         title,
         slug,
         content,
+        image: image || null,
         published: published === true || published === 'true',
         authorId: user.id, // Relación con el usuario logueado
       },

@@ -16,12 +16,25 @@ export async function POST(request) {
     // 1. Leer datos del body
     const { name, email, password } = await request.json();
 
-    // 2. Validación básica
+    // 2. Validación
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: 'Todos los campos son obligatorios' },
         { status: 400 }
       );
+    }
+
+    if (name.length > 100) {
+      return NextResponse.json({ error: 'El nombre no puede superar 100 caracteres' }, { status: 400 });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email) || email.length > 255) {
+      return NextResponse.json({ error: 'Email no válido' }, { status: 400 });
+    }
+
+    if (password.length < 6 || password.length > 100) {
+      return NextResponse.json({ error: 'La contraseña debe tener entre 6 y 100 caracteres' }, { status: 400 });
     }
 
     // 3. Registrar usuario (hashea contraseña y guarda en BD)

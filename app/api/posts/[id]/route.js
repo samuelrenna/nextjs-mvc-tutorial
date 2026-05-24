@@ -31,7 +31,7 @@ export async function GET(request, { params }) {
     // Prisma: findUnique = SELECT * FROM posts WHERE id = ? LIMIT 1
     const post = await prisma.post.findUnique({
       where: { id: postId },
-      include: { author: { select: { name: true, email: true } } },
+      include: { author: { select: { name: true } } },
     });
 
     if (!post) {
@@ -66,17 +66,29 @@ export async function PUT(request, { params }) {
     const { id } = await params;
     const postId = parseInt(id);
 
-    // Verificar que el post existe
+    // Verificar que el post existe (incluimos rol del autor para validar permisos)
     const existingPost = await prisma.post.findUnique({
       where: { id: postId },
+      include: { author: { select: { role: true } } },
     });
 
     if (!existingPost) {
       return NextResponse.json({ error: 'Post no encontrado' }, { status: 404 });
     }
 
-    // Verificar permisos: solo el autor o admin pueden editar
-    if (existingPost.authorId !== user.id && user.role !== 'admin') {
+    if (user.role === 'admin') {
+      // Admin puede editar cualquier post
+    } else if (user.role === 'editor') {
+      // Editor puede editar solo sus propios posts o los de un user
+      const isOwnPost = existingPost.authorId === user.id;
+      const isUserPost = existingPost.author.role === 'user';
+      if (!isOwnPost && !isUserPost) {
+        return NextResponse.json(
+          { error: 'Solo puedes editar tus posts o los de usuarios básicos' },
+          { status: 403 }
+        );
+      }
+    } else {
       return NextResponse.json(
         { error: 'No tienes permisos para editar este post' },
         { status: 403 }
@@ -133,8 +145,13 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: 'Post no encontrado' }, { status: 404 });
     }
 
-    // Verificar permisos
-    if (existingPost.authorId !== user.id && user.role !== 'admin') {
+    // Admin puede borrar cualquier post
+    // Editor solo puede borrar sus propios posts
+    if (user.role === 'admin') {
+      // permitido
+    } else if (user.role === 'editor' && existingPost.authorId === user.id) {
+      // permitido
+    } else {
       return NextResponse.json(
         { error: 'No tienes permisos para eliminar este post' },
         { status: 403 }

@@ -37,7 +37,7 @@ export default async function DashboardPage({ searchParams }) {
 
   const posts = await prisma.post.findMany({
     where: whereClause,
-    include: { author: { select: { name: true } } },
+    include: { author: { select: { name: true, role: true } } },
     orderBy: { createdAt: 'desc' },
   });
 
@@ -60,15 +60,13 @@ export default async function DashboardPage({ searchParams }) {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          {/* Solo editor y admin pueden crear posts */}
-          {['editor', 'admin'].includes(user.role) && (
-            <Link href="/dashboard/posts/new" className="btn btn-primary">
-              + Nuevo Post
-            </Link>
-          )}
+          {/* user, editor y admin pueden crear posts */}
+          <Link href="/dashboard/posts/new" className="btn btn-primary">
+            + Nuevo Post
+          </Link>
           {user.role === 'admin' && (
             <Link href="/dashboard/admin" className="btn btn-outline">
-              Panel Admin
+              Gestión de Usuarios
             </Link>
           )}
         </div>
@@ -136,10 +134,18 @@ export default async function DashboardPage({ searchParams }) {
                   <td>{new Date(post.createdAt).toLocaleDateString('es-ES')}</td>
                   <td>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <Link href={`/dashboard/posts/${post.id}/edit`} className="btn btn-outline btn-sm">
-                        Editar
-                      </Link>
-                      <DeletePostButton postId={post.id} />
+                      {/* Admin edita cualquier post; editor solo los suyos o los de users */}
+                      {(user.role === 'admin' ||
+                        (user.role === 'editor' && (post.authorId === user.id || post.author.role === 'user'))) && (
+                        <Link href={`/dashboard/posts/${post.id}/edit`} className="btn btn-outline btn-sm">
+                          Editar
+                        </Link>
+                      )}
+                      {/* Admin borra cualquier post; editor solo el suyo */}
+                      {(user.role === 'admin' ||
+                        (user.role === 'editor' && post.authorId === user.id)) && (
+                        <DeletePostButton postId={post.id} />
+                      )}
                     </div>
                   </td>
                 </tr>

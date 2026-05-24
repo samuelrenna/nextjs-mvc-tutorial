@@ -11,9 +11,10 @@
 import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/session';
+import UserManagement from './UserManagement';
 
 export const metadata = {
-  title: 'Panel de Administración',
+  title: 'Gestión de Usuarios',
 };
 
 export default async function AdminPage() {
@@ -45,9 +46,9 @@ export default async function AdminPage() {
     <div className="dashboard">
       <div className="flex-between">
         <div>
-          <h1>Panel de Administración</h1>
+          <h1>Gestión de Usuarios</h1>
           <p style={{ color: '#6b7280' }}>
-            Gestión de usuarios y contenido (solo para administradores)
+            Administración de usuarios y roles (solo para administradores)
           </p>
         </div>
         <a href="/dashboard" className="btn btn-outline">← Dashboard</a>
@@ -65,36 +66,8 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      {/* ---- Tabla de usuarios ---- */}
-      <h2 className="mt-4">Usuarios Registrados</h2>
-      <div className="table-wrapper mt-1">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th>Email</th>
-              <th>Rol</th>
-              <th>Posts</th>
-              <th>Registro</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id}>
-                <td>{u.id}</td>
-                <td><strong>{u.name}</strong></td>
-                <td>{u.email}</td>
-                <td>
-                  <span className={`badge badge-${u.role}`}>{u.role}</span>
-                </td>
-                <td>{u._count.posts}</td>
-                <td>{new Date(u.createdAt).toLocaleDateString('es-ES')}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* ---- Gestión completa de usuarios (CRUD) ---- */}
+      <UserManagement users={users} currentAdminId={user.id} />
     </div>
   );
 }

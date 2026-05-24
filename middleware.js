@@ -28,11 +28,12 @@ const sessionOptions = {
 // Definición de rutas protegidas y permisos
 // ============================================
 const protectedRoutes = [
-  // Rutas que requieren estar logueado (cualquier rol)
-  { path: '/dashboard', roles: ['user', 'editor', 'admin'] },
-  { path: '/dashboard/posts/new', roles: ['editor', 'admin'] },
-  // Rutas exclusivas de admin
+  // Más específicas primero — find() para en el primer match con startsWith
   { path: '/dashboard/admin', roles: ['admin'] },
+  { path: '/dashboard/posts/new', roles: ['user', 'editor', 'admin'] },
+  { path: '/dashboard/posts', roles: ['editor', 'admin'] },
+  // Cualquier otra ruta bajo /dashboard requiere estar logueado
+  { path: '/dashboard', roles: ['user', 'editor', 'admin'] },
 ];
 
 // ============================================

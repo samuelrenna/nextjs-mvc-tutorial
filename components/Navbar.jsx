@@ -29,7 +29,7 @@ export default async function Navbar() {
           <li><Link href="/contact">Contacto</Link></li>
 
           {/* ---- Links condicionales según sesión ---- */}
-          {/* Esto es el equivalente a {% if user %} Jinja */}
+          {/* Esto es el equivalente a {% if user %} */}
           {user ? (
             <>
               <li><Link href="/dashboard">Dashboard</Link></li>
